@@ -11,13 +11,18 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping(value = "/api/pareceres")
-public class ParecerController extends AbstractController<Parecer, Long> {
+public class ParecerController extends AbstractController<Parecer, ParecerRepresentation, Long> {
+
+    public ParecerController() {
+        super(Parecer.class, ParecerRepresentation.class);
+    }
 
     @Override
     @PostMapping
-    public ResponseEntity<Parecer> save(@RequestBody Parecer entity) {
+    public ResponseEntity<ParecerRepresentation> save(@RequestBody ParecerRepresentation parecer) {
+        Parecer entity = representationToEntity(parecer);
         entity.setDhParecer(LocalDateTime.now());
-        return super.save(entity);
+        return super.save(entityToRepresentation(entity));
     }
 
 }

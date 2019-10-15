@@ -8,40 +8,48 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Objects.nonNull;
 
 @RestController
 @RequestMapping(value = "/api/usuarios")
-public class UsuarioController extends AbstractController<Usuario, Long> {
+public class UsuarioController extends AbstractController<Usuario, UsuarioRepresentation, Long> {
+
+    public UsuarioController() {
+        super(Usuario.class, UsuarioRepresentation.class);
+    }
 
     @PostMapping(value = "/login")
-    public ResponseEntity<Usuario> login(@RequestBody Usuario usuario) {
+    public ResponseEntity<UsuarioRepresentation> login(@RequestBody UsuarioRepresentation usuario) {
         UsuarioRepository usuarioRepository = (UsuarioRepository) repository;
 
         Usuario usuarioLogin = usuarioRepository
                 .findByEmailAndSenha(usuario.getEmail(), PasswordBuilder.toHash(usuario.getSenha()));
         if (nonNull(usuarioLogin)) {
-            return new ResponseEntity(usuarioLogin, HttpStatus.OK);
+            return new ResponseEntity(entityToRepresentation(usuarioLogin), HttpStatus.OK);
         }
 
         return new ResponseEntity(HttpStatus.UNAUTHORIZED);
     }
 
     @GetMapping(value = "/consulta", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<List<Usuario>> findAllByPerfil(@RequestParam(value = "perfil") Perfil perfil) {
+    public ResponseEntity<List<UsuarioRepresentation>> findAllByPerfil(@RequestParam(value = "perfil") Perfil perfil) {
+        List<UsuarioRepresentation> usuariosRepresentation = new ArrayList<>();
         UsuarioRepository usuarioRepository = (UsuarioRepository) repository;
         List<Usuario> usuariosByPerfil = usuarioRepository.findByPerfil(perfil);
-        return new ResponseEntity(usuariosByPerfil, HttpStatus.OK);
+        usuariosByPerfil.forEach(entity -> usuariosRepresentation.add(entityToRepresentation(entity)));
+        return new ResponseEntity(usuariosRepresentation, HttpStatus.OK);
     }
 
     @Override
     @PostMapping
-    public ResponseEntity<Usuario> save(@RequestBody Usuario entity) {
+    public ResponseEntity<UsuarioRepresentation> save(@RequestBody UsuarioRepresentation usuario) {
+        Usuario entity = representationToEntity(usuario);
         validate(entity);
         entity.setSenha(nonNull(entity.getSenha()) ? PasswordBuilder.toHash(entity.getSenha()) : null);
-        return super.save(entity);
+        return super.save(entityToRepresentation(entity));
     }
 
     @Override

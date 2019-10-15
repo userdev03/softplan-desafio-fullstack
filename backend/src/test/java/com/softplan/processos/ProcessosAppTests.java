@@ -1,4 +1,4 @@
-package com.soft.apiprocessos;
+package com.softplan.processos;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

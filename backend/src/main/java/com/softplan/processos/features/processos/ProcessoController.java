@@ -11,13 +11,18 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping(value = "/api/processos")
-public class ProcessoController extends AbstractController<Processo, Long> {
+public class ProcessoController extends AbstractController<Processo, ProcessoRepresentation, Long> {
+
+    public ProcessoController() {
+        super(Processo.class, ProcessoRepresentation.class);
+    }
 
     @Override
     @PostMapping
-    public ResponseEntity<Processo> save(@RequestBody Processo entity) {
+    public ResponseEntity<ProcessoRepresentation> save(@RequestBody ProcessoRepresentation processo) {
+        Processo entity = representationToEntity(processo);
         entity.setDhAbertura(LocalDateTime.now());
-        return super.save(entity);
+        return super.save(entityToRepresentation(entity));
     }
 
 }

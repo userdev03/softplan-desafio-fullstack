@@ -11,13 +11,18 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping(value = "/api/atribuicoes")
-public class AtribuicaoController extends AbstractController<Atribuicao, Long> {
+public class AtribuicaoController extends AbstractController<Atribuicao, AtribuicaoRepresentation, Long> {
+
+    public AtribuicaoController() {
+        super(Atribuicao.class, AtribuicaoRepresentation.class);
+    }
 
     @Override
     @PostMapping
-    public ResponseEntity<Atribuicao> save(@RequestBody Atribuicao entity) {
+    public ResponseEntity<AtribuicaoRepresentation> save(@RequestBody AtribuicaoRepresentation atribuicao) {
+        Atribuicao entity = representationToEntity(atribuicao);
         entity.setDhAtribuicao(LocalDateTime.now());
-        return super.save(entity);
+        return super.save(entityToRepresentation(entity));
     }
 
 }

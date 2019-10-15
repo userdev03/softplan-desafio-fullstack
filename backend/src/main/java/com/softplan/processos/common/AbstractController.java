@@ -1,5 +1,6 @@
 package com.softplan.processos.common;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,51 +15,72 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 import java.util.Set;
 
-public abstract class AbstractController<T, ID> {
+public abstract class AbstractController<E, R, ID> {
 
     @Autowired
-    protected PagingAndSortingRepository<T, ID> repository;
+    protected PagingAndSortingRepository<E, ID> repository;
 
     @Autowired
     protected Validator validator;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
+    private Class<E> entityClass;
+    private Class<R> representationClass;
+
+    public AbstractController(Class<E> entityClass, Class<R> representationClass) {
+        this.entityClass = entityClass;
+        this.representationClass = representationClass;
+    }
+
     @GetMapping(value = "/{id}")
-    public ResponseEntity findById(@PathVariable("id") ID id) {
-        T entity = repository.findById(id).orElseThrow(EntityNotFoundException::new);
-        return new ResponseEntity(entity, HttpStatus.OK);
+    public ResponseEntity<R> findById(@PathVariable("id") ID id) {
+        E entity = repository.findById(id).orElseThrow(EntityNotFoundException::new);
+        return new ResponseEntity(entityToRepresentation(entity), HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<Page<T>> findAllPaged(Pageable pageable) {
-        Page<T> page = repository.findAll(pageable);
+    public ResponseEntity<Page<R>> findAllPaged(Pageable pageable) {
+        Page<R> page = repository.findAll(pageable).map(entity -> entityToRepresentation(entity));
         return new ResponseEntity(page, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<T> save(@RequestBody T entity) {
+    public ResponseEntity<R> save(@RequestBody R representation) {
+        E entity = representationToEntity(representation);
         validate(entity);
-        T entitySaved = repository.save(entity);
-        return new ResponseEntity(entitySaved, HttpStatus.CREATED);
+        E entitySaved = repository.save(entity);
+        return new ResponseEntity(entityToRepresentation(entitySaved), HttpStatus.CREATED);
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity update(@PathVariable("id") ID id, @RequestBody T entity) {
+    public ResponseEntity<R> update(@PathVariable("id") ID id, @RequestBody R representation) {
         repository.findById(id).orElseThrow(EntityNotFoundException::new);
+        E entity = representationToEntity(representation);
         validate(entity);
-        T entityUpdated = repository.save(entity);
-        return new ResponseEntity(entityUpdated, HttpStatus.OK);
+        E entityUpdated = repository.save(entity);
+        return new ResponseEntity(entityToRepresentation(entityUpdated), HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/{id}")
     public ResponseEntity remove(@PathVariable("id") ID id) {
-        T entityToRemove = repository.findById(id).orElseThrow(EntityNotFoundException::new);
+        E entityToRemove = repository.findById(id).orElseThrow(EntityNotFoundException::new);
         repository.delete(entityToRemove);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    protected void validate(T entity) {
-        Set<ConstraintViolation<T>> violations = validator.validate(entity);
+    protected void validate(E entity) {
+        Set<ConstraintViolation<E>> violations = validator.validate(entity);
         if (!violations.isEmpty()) throw new ConstraintViolationException(violations);
+    }
+
+    protected E representationToEntity(R dto) {
+        return modelMapper.map(dto, entityClass);
+    }
+
+    protected R entityToRepresentation(E entity) {
+        return modelMapper.map(entity, representationClass);
     }
 
 }
