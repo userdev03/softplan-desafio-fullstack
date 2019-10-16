@@ -96,8 +96,8 @@ class AtribuicoesParecer extends Component {
                                 <textarea type="text" rows="5" className="form-control" id="textoParecer" name="textoParecer" value={textoParecer} onChange={this.handleChange} placeholder="Informe o parecer.." />
                             </div>
                         </div>
-                        <button type="submit" id="btSalvar" name="btSalvar" className="btn btn-primary">Atribuir</button>&nbsp;
-                        <Link to="/processos" className="btn btn-secondary">Cancelar</Link>
+                        <button type="submit" id="btSalvar" name="btSalvar" className="btn btn-primary">Salvar</button>&nbsp;
+                        <Link to="/atribuicoes" className="btn btn-secondary">Cancelar</Link>
                     </form>
                 </div>
             );
